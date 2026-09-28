@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub CLI TUI</title>
+  <meta name="description" content="A user-friendly Terminal User Interface wrapper for the official GitHub CLI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --primary: #238636;
+      --primary-hover: #2ea043;
+      --text: #c9d1d9;
+      --heading: #ffffff;
+      --accent: #58a6ff;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    h1, h2, h3 {
+      color: var(--heading);
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      background: linear-gradient(90deg, #58a6ff, #bd56ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      color: #8b949e;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: var(--primary);
+      color: white;
+      text-decoration: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .feature-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      transition: transform 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    pre {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .tui-mockup {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 4rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .tui-header {
+      background-color: #010409;
+      padding: 0.5rem 1rem;
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .dot.red { background-color: #ff5f56; }
+    .dot.yellow { background-color: #ffbd2e; }
+    .dot.green { background-color: #27c93f; }
+
+    .tui-body {
+      background-color: #0d1117;
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #79c0ff;
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>GitHub CLI TUI</h1>
+      <p>A beautiful, terminal-native user interface for managing your GitHub repositories, issues, pull requests, and git remotes.</p>
+      <a href="https://github.com/cambrianminds/gh-tui" class="btn">View on GitHub</a>
+    </div>
+
+    <div class="tui-mockup">
+      <div class="tui-header">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <div class="tui-body">
+        <div>> gh-tui starting...</div>
+        <div>> Authenticated with GitHub.</div>
+        <div>> Fetching open issues for cambrianminds/gh-tui...</div>
+        <div style="color: #d2a8ff; margin-top: 1rem;">
+          ┌────────────────────────────────────────────────────────┐<br>
+          │ [Dashboard]  [Issues]  [Pull Requests]  [Remotes]      │<br>
+          └────────────────────────────────────────────────────────┘
+        </div>
+      </div>
+    </div>
+
+    <h2>Core Features</h2>
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Repository Dashboard</h3>
+        <p>Instantly view the README and current status of your target repository natively in the terminal.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <h3>Interactive Login</h3>
+        <p>Seamlessly authenticate with GitHub using the official CLI auth flow without leaving the TUI.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <h3>Remote Management</h3>
+        <p>Add, remove, and manage your local git remotes and default GitHub repositories from a dedicated configuration panel.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3>Issues & Pull Requests</h3>
+        <p>Browse open tickets in an interactive data table, read full Markdown descriptions, and jump directly to the browser.</p>
+      </div>
+    </div>
+
+    <h2>Quick Start</h2>
+    <p>Ensure you have Python 3.10+ and the <a href="https://cli.github.com/" style="color: var(--accent);">GitHub CLI (gh)</a> installed.</p>
+    <pre><code>git clone https://github.com/cambrianminds/gh-tui.git
+cd gh-tui
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py</code></pre>
+  </div>
+</body>
+</html>

@@ -77,10 +77,13 @@ class GHTUIApp(App):
                 yield Button("Dashboard", id="nav-dashboard", classes="nav-btn", variant="primary")
                 yield Button("Issues", id="nav-issues", classes="nav-btn")
                 yield Button("Pull Requests", id="nav-prs", classes="nav-btn")
+                yield Button("Remotes / Config", id="nav-config", classes="nav-btn")
                 
                 yield Label("Status:")
                 self.status_log = Log(id="status-log")
                 yield self.status_log
+                
+                yield Button("Login (Interactive)", id="action-login", classes="nav-btn", variant="success")
 
             # Center Panel: Content (Table or Details)
             with Vertical(id="center-panel"):
@@ -101,8 +104,23 @@ class GHTUIApp(App):
                 self.btn_open_browser = Button("Open in Browser", id="action-browser", classes="action-btn", disabled=True)
                 yield self.btn_open_browser
                 
-                yield Button("Refresh", id="action-refresh", classes="action-btn", variant="success")
-                yield Button("Create Issue", id="action-create-issue", classes="action-btn", variant="warning")
+                self.btn_refresh = Button("Refresh", id="action-refresh", classes="action-btn", variant="success")
+                yield self.btn_refresh
+                self.btn_create_issue = Button("Create Issue", id="action-create-issue", classes="action-btn", variant="warning")
+                yield self.btn_create_issue
+                
+                self.config_controls = Vertical(
+                    Label("Remote Name (e.g. origin):"),
+                    Input(id="input-remote-name", placeholder="origin", classes="field"),
+                    Label("Remote URL or Repo:"),
+                    Input(id="input-remote-url", placeholder="URL or owner/repo", classes="field"),
+                    Button("Add Remote", id="action-add-remote", classes="action-btn", variant="success"),
+                    Button("Remove Remote", id="action-remove-remote", classes="action-btn", variant="error"),
+                    Button("Set Default (gh)", id="action-set-default", classes="action-btn", variant="primary"),
+                    id="config-controls"
+                )
+                self.config_controls.display = False
+                yield self.config_controls
 
         yield Footer()
 
@@ -112,14 +130,21 @@ class GHTUIApp(App):
         self.current_data = []
         self.selected_item = None
         
-        # Check if gh CLI is installed
+        self.check_auth()
+        self.load_dashboard()
+
+    def check_auth(self) -> None:
         try:
             subprocess.run(["gh", "--version"], capture_output=True, check=True)
             self.status_log.write_line("gh CLI found.")
-        except Exception:
-            self.status_log.write_line("Error: gh CLI not found or not authenticated.")
             
-        self.load_dashboard()
+            auth_res = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
+            if auth_res.returncode == 0:
+                self.status_log.write_line("Authenticated with GitHub.")
+            else:
+                self.status_log.write_line("Not logged in. Use the Login button.")
+        except Exception:
+            self.status_log.write_line("Error: gh CLI not found on PATH.")
 
     def get_repo_arg(self) -> list:
         repo = self.repo_input.value.strip()
@@ -202,6 +227,65 @@ class GHTUIApp(App):
         except subprocess.CalledProcessError as e:
             self.log_msg(f"Error fetching details: {e.stderr}")
 
+    @work(thread=True)
+    def load_config(self) -> None:
+        self.app.call_from_thread(self.set_title, "Loading Configuration...")
+        self.log_msg("Fetching git remotes...")
+        
+        try:
+            git_result = subprocess.run(["git", "remote", "-v"], capture_output=True, text=True)
+            remotes = git_result.stdout if git_result.stdout else "No remotes found."
+            
+            gh_result = subprocess.run(["gh", "repo", "set-default", "--view"], capture_output=True, text=True)
+            default_repo = gh_result.stdout if gh_result.stdout else "Not set."
+            
+            content = f"### Git Remotes\n```text\n{remotes}\n```\n\n### Default GitHub Repo (`gh`)\n```text\n{default_repo}\n```"
+            
+            self.app.call_from_thread(self.show_markdown, "Configuration & Remotes", content)
+            self.current_view = "config"
+            self.log_msg("Configuration loaded.")
+        except Exception as e:
+            self.log_msg(f"Error loading config: {e}")
+
+    @work(thread=True)
+    def action_remote_add(self, name: str, url: str) -> None:
+        if not name or not url:
+            self.log_msg("Error: Name and URL required to add remote.")
+            return
+        self.log_msg(f"Adding remote '{name}'...")
+        try:
+            subprocess.run(["git", "remote", "add", name, url], capture_output=True, text=True, check=True)
+            self.log_msg(f"Added remote {name}.")
+            self.load_config()
+        except subprocess.CalledProcessError as e:
+            self.log_msg(f"Error adding remote: {e.stderr}")
+
+    @work(thread=True)
+    def action_remote_remove(self, name: str) -> None:
+        if not name:
+            self.log_msg("Error: Remote name required to remove.")
+            return
+        self.log_msg(f"Removing remote '{name}'...")
+        try:
+            subprocess.run(["git", "remote", "remove", name], capture_output=True, text=True, check=True)
+            self.log_msg(f"Removed remote {name}.")
+            self.load_config()
+        except subprocess.CalledProcessError as e:
+            self.log_msg(f"Error removing remote: {e.stderr}")
+
+    @work(thread=True)
+    def action_remote_default(self, repo: str) -> None:
+        if not repo:
+            self.log_msg("Error: Repo required to set default.")
+            return
+        self.log_msg(f"Setting default repo to '{repo}'...")
+        try:
+            subprocess.run(["gh", "repo", "set-default", repo], capture_output=True, text=True, check=True)
+            self.log_msg(f"Default repo set to {repo}.")
+            self.load_config()
+        except subprocess.CalledProcessError as e:
+            self.log_msg(f"Error setting default: {e.stderr}")
+
     def show_table(self, title: str, headers: list, rows: list) -> None:
         self.query_one("#content-title", Label).update(title)
         self.data_table.clear(columns=True)
@@ -229,8 +313,29 @@ class GHTUIApp(App):
     def set_title(self, text: str) -> None:
         self.query_one("#content-title", Label).update(text)
 
+    def action_login(self) -> None:
+        with self.suspend():
+            print("\n" * 40)
+            print("--- GitHub CLI Authentication ---")
+            subprocess.run(["gh", "auth", "login"])
+            print("\nAuthentication process finished.")
+            input("Press Enter to return to the TUI...")
+        
+        self.check_auth()
+        if self.current_view == "dashboard":
+            self.load_dashboard()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id
+        
+        if btn_id and btn_id.startswith("nav-"):
+            is_config = (btn_id == "nav-config")
+            if hasattr(self, 'config_controls'):
+                self.config_controls.display = is_config
+            self.btn_view_details.display = not is_config
+            self.btn_open_browser.display = not is_config
+            self.btn_refresh.display = not is_config
+            self.btn_create_issue.display = not is_config
         
         if btn_id == "nav-dashboard":
             self.load_dashboard()
@@ -238,11 +343,15 @@ class GHTUIApp(App):
             self.load_issues()
         elif btn_id == "nav-prs":
             self.load_prs()
+        elif btn_id == "nav-config":
+            self.load_config()
         elif btn_id == "action-refresh":
             if self.current_view == "issues":
                 self.load_issues()
             elif self.current_view == "prs":
                 self.load_prs()
+            elif self.current_view == "config":
+                self.load_config()
             else:
                 self.load_dashboard()
         elif btn_id == "action-details":
@@ -254,6 +363,18 @@ class GHTUIApp(App):
                 self.log_msg(f"Opened {self.selected_item['url']} in browser.")
         elif btn_id == "action-create-issue":
             self.log_msg("To create an issue, run 'gh issue create' in the terminal.")
+        elif btn_id == "action-login":
+            self.action_login()
+        elif btn_id == "action-add-remote":
+            name = self.query_one("#input-remote-name", Input).value.strip()
+            url = self.query_one("#input-remote-url", Input).value.strip()
+            self.action_remote_add(name, url)
+        elif btn_id == "action-remove-remote":
+            name = self.query_one("#input-remote-name", Input).value.strip()
+            self.action_remote_remove(name)
+        elif btn_id == "action-set-default":
+            repo = self.query_one("#input-remote-url", Input).value.strip()
+            self.action_remote_default(repo)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         row_index = event.cursor_row
