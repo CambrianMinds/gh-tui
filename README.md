@@ -24,6 +24,13 @@ This tool makes exploring repositories, issues, and pull requests accessible to 
 2. **Python**: Python 3.10+ installed.
 
 ## Installation & Usage
+
+**One-line installation (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/cambrianminds/gh-tui/main/install.ps1 | iex
+```
+
+Or install manually:
 1. Open your terminal in the `gh-tui` directory.
 2. (Optional) Create a virtual environment: `python -m venv venv` and activate it.
 3. Install dependencies:
