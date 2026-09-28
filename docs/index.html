@@ -185,7 +185,7 @@
       overflow: hidden;
       white-space: nowrap;
       border-right: 2px solid var(--primary);
-      animation: typing 3s steps(40, end), blink 0.75s step-end infinite;
+      animation: typing 1.5s steps(20, end) forwards, blink 0.75s step-end infinite;
     }
 
     @keyframes typing {
@@ -195,6 +195,19 @@
     @keyframes blink {
       from, to { border-color: transparent }
       50% { border-color: var(--primary) }
+    }
+
+    .terminal-line {
+      opacity: 0;
+      animation: fadeIn 0.1s forwards;
+    }
+    
+    .delay-1 { animation-delay: 1.8s; }
+    .delay-2 { animation-delay: 2.5s; }
+    .delay-3 { animation-delay: 3.2s; }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
     }
 
     /* Features Grid */
@@ -333,10 +346,13 @@
         <div class="dot green"></div>
       </div>
       <div class="tui-body">
-        <div style="color: #8b949e;">$ gh-tui start</div>
-        <div style="color: #2ea043; margin-top: 0.5rem;">✔ Authenticated with GitHub.</div>
-        <div style="color: #8b949e; margin-top: 0.5rem;">> Fetching data for cambrianminds/gh-tui...</div>
-        <div class="typing-anim" style="color: #d2a8ff; margin-top: 1.5rem; display: block; max-width: max-content;">
+        <div style="color: #8b949e; display: flex; align-items: center; gap: 0.5rem;">
+          <span>$</span>
+          <div class="typing-anim" style="color: #f0f0f0;">gh-tui start</div>
+        </div>
+        <div class="terminal-line delay-1" style="color: #2ea043; margin-top: 0.5rem;">✔ Authenticated with GitHub.</div>
+        <div class="terminal-line delay-2" style="color: #8b949e; margin-top: 0.5rem;">> Fetching data for cambrianminds/gh-tui...</div>
+        <div class="terminal-line delay-3" style="color: #d2a8ff; margin-top: 1.5rem; display: block; max-width: max-content;">
           ┌───────────────────────────────────────────────────────┐<br>
           │ [Dashboard]  [Issues]  [Pull Requests]  [Remotes]     │<br>
           └───────────────────────────────────────────────────────┘
