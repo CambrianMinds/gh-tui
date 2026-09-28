@@ -67,6 +67,7 @@
       font-size: 1.5rem;
       background: linear-gradient(90deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: -0.5px;
     }
@@ -125,6 +126,7 @@
 
     .btn-outline {
       background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
       border: 1px solid var(--glass-border);
       color: var(--text-main);
@@ -138,6 +140,7 @@
     /* Terminal Mockup */
     .tui-mockup {
       background: rgba(10, 10, 15, 0.9);
+      -webkit-backdrop-filter: blur(20px);
       backdrop-filter: blur(20px);
       border: 1px solid var(--glass-border);
       border-radius: 12px;
@@ -218,6 +221,7 @@
       margin-bottom: 3rem;
       background: linear-gradient(90deg, #fff, #8a8f98);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -230,6 +234,7 @@
 
     .feature-card {
       background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
       border: 1px solid var(--glass-border);
       border-radius: 16px;
@@ -267,6 +272,7 @@
       display: inline-block;
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -284,6 +290,7 @@
     /* Installation */
     .setup-section {
       background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
       border: 1px solid var(--glass-border);
       border-radius: 16px;
@@ -312,6 +319,37 @@
       letter-spacing: 1px;
     }
 
+    /* Extracted Inline Styles */
+    .btn-header {
+      padding: 0.5rem 1.5rem;
+      font-size: 0.9rem;
+    }
+    .tui-prompt {
+      color: #8b949e;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tui-prompt-typing { color: #f0f0f0; }
+    .tui-output-success { color: #2ea043; margin-top: 0.5rem; }
+    .tui-output-info { color: #8b949e; margin-top: 0.5rem; }
+    .tui-dashboard {
+      color: #d2a8ff;
+      margin-top: 1.5rem;
+      display: block;
+      max-width: max-content;
+      white-space: pre;
+    }
+    .setup-desc {
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+    .setup-link {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .mt-3 { margin-top: 3rem; }
+
     /* Animations */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
@@ -328,7 +366,7 @@
   <div class="container">
     <header>
       <div class="logo">GH-TUI</div>
-      <a href="https://github.com/cambrianminds/gh-tui" class="btn btn-outline" style="padding: 0.5rem 1.5rem; font-size: 0.9rem;">Star on GitHub</a>
+      <a href="https://github.com/cambrianminds/gh-tui" class="btn btn-outline btn-header">Star on GitHub</a>
     </header>
 
     <div class="hero">
@@ -347,13 +385,13 @@
         <div class="dot green"></div>
       </div>
       <div class="tui-body">
-        <div style="color: #8b949e; display: flex; align-items: center; gap: 0.5rem;">
+        <div class="tui-prompt">
           <span>$</span>
-          <div class="typing-anim" style="color: #f0f0f0;">gh-tui start</div>
+          <div class="typing-anim tui-prompt-typing">gh-tui start</div>
         </div>
-        <div class="terminal-line delay-1" style="color: #2ea043; margin-top: 0.5rem;">✔ Authenticated with GitHub.</div>
-        <div class="terminal-line delay-2" style="color: #8b949e; margin-top: 0.5rem;">> Fetching data for cambrianminds/gh-tui...</div>
-        <div class="terminal-line delay-3" style="color: #d2a8ff; margin-top: 1.5rem; display: block; max-width: max-content;">
+        <div class="terminal-line delay-1 tui-output-success">✔ Authenticated with GitHub.</div>
+        <div class="terminal-line delay-2 tui-output-info">> Fetching data for cambrianminds/gh-tui...</div>
+        <div class="terminal-line delay-3 tui-dashboard">
           ┌───────────────────────────────────────────────────────┐<br>
           │ [Dashboard]  [Issues]  [Pull Requests]  [Remotes]     │<br>
           └───────────────────────────────────────────────────────┘
@@ -387,14 +425,14 @@
 
     <h2 class="section-title" id="install">Get Started</h2>
     <div class="setup-section">
-      <p style="margin-bottom: 2rem; font-size: 1.1rem;">Ensure you have Python 3.10+ and the <a href="https://cli.github.com/" style="color: var(--primary); text-decoration: none;">GitHub CLI (gh)</a> installed.</p>
+      <p class="setup-desc">Ensure you have Python 3.10+ and the <a href="https://cli.github.com/" class="setup-link">GitHub CLI (gh)</a> installed.</p>
       
       <div class="code-title">One-line Installation (Windows PowerShell)</div>
       <div class="code-block">
         <code>irm https://raw.githubusercontent.com/cambrianminds/gh-tui/main/install.ps1 | iex</code>
       </div>
 
-      <div class="code-title" style="margin-top: 3rem;">Manual Installation (Cross-Platform)</div>
+      <div class="code-title mt-3">Manual Installation (Cross-Platform)</div>
       <div class="code-block">
         <code>git clone https://github.com/cambrianminds/gh-tui.git
 cd gh-tui
