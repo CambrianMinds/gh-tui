@@ -1,7 +1,11 @@
 # GitHub CLI TUI (`gh-tui`)
 
-A terminal user interface wrapper for the official GitHub CLI (`gh`). 
+[![GitHub Pages](https://img.shields.io/badge/docs-GitHub%20Pages-00d2ff.svg)](https://cambrianminds.github.io/gh-tui/)
+
+> A terminal user interface wrapper for the official GitHub CLI (`gh`). 
 This tool makes exploring repositories, issues, and pull requests accessible to everyone without needing to memorize `gh` commands.
+
+🔗 **Live Documentation:** [https://cambrianminds.github.io/gh-tui/](https://cambrianminds.github.io/gh-tui/)
 
 ## Features
 - **Dashboard:** Instantly view the repository's README and status.
