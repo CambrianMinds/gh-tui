@@ -185,12 +185,13 @@
       overflow: hidden;
       white-space: nowrap;
       border-right: 2px solid var(--primary);
-      animation: typing 1.5s steps(20, end) forwards, blink 0.75s step-end infinite;
+      width: 0;
+      animation: typing 1.5s steps(12, end) forwards, blink 0.75s step-end infinite;
     }
 
     @keyframes typing {
       from { width: 0 }
-      to { width: 100% }
+      to { width: 12.5ch; }
     }
     @keyframes blink {
       from, to { border-color: transparent }
