@@ -75,6 +75,7 @@ class GHTUIApp(App):
                 
                 yield Label("Navigation", classes="field")
                 yield Button("Dashboard", id="nav-dashboard", classes="nav-btn", variant="primary")
+                yield Button("My Repositories", id="nav-my-repos", classes="nav-btn")
                 yield Button("Issues", id="nav-issues", classes="nav-btn")
                 yield Button("Pull Requests", id="nav-prs", classes="nav-btn")
                 yield Button("Remotes / Config", id="nav-config", classes="nav-btn")
@@ -109,6 +110,15 @@ class GHTUIApp(App):
                 self.btn_create_issue = Button("Create Issue", id="action-create-issue", classes="action-btn", variant="warning")
                 yield self.btn_create_issue
                 
+                self.repo_controls = Vertical(
+                    Button("Bulk Delete", id="action-bulk-delete", classes="action-btn", variant="error"),
+                    Button("Make Private", id="action-bulk-private", classes="action-btn", variant="warning"),
+                    Button("Make Public", id="action-bulk-public", classes="action-btn", variant="primary"),
+                    id="repo-controls"
+                )
+                self.repo_controls.display = False
+                yield self.repo_controls
+
                 self.config_controls = Vertical(
                     Label("Remote Name (e.g. origin):"),
                     Input(id="input-remote-name", placeholder="origin", classes="field"),
@@ -117,6 +127,7 @@ class GHTUIApp(App):
                     Button("Add Remote", id="action-add-remote", classes="action-btn", variant="success"),
                     Button("Remove Remote", id="action-remove-remote", classes="action-btn", variant="error"),
                     Button("Set Default (gh)", id="action-set-default", classes="action-btn", variant="primary"),
+                    Button("Fetch Remotes", id="action-fetch-remotes", classes="action-btn"),
                     id="config-controls"
                 )
                 self.config_controls.display = False
@@ -129,6 +140,7 @@ class GHTUIApp(App):
         self.current_view = "dashboard"
         self.current_data = []
         self.selected_item = None
+        self.selected_repos = set()
         
         self.check_auth()
         self.load_dashboard()
@@ -154,6 +166,61 @@ class GHTUIApp(App):
 
     def log_msg(self, msg: str) -> None:
         self.app.call_from_thread(self.status_log.write_line, msg)
+
+    @work(thread=True)
+    def load_my_repos(self) -> None:
+        self.app.call_from_thread(self.set_title, "Loading My Repositories...")
+        self.log_msg("Fetching repositories...")
+        self.selected_repos.clear()
+        
+        cmd = ["gh", "repo", "list", "--json", "name,visibility,updatedAt,url", "-L", "100"]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            repos = json.loads(result.stdout)
+            self.current_data = repos
+            self.current_view = "my-repos"
+            
+            headers = ["Select", "Name", "Visibility", "Updated"]
+            rows = [
+                ("[ ]", r["name"], r["visibility"], r["updatedAt"][:10])
+                for r in repos
+            ]
+            self.app.call_from_thread(self.show_table, "My Repositories (Select rows to mark)", headers, rows)
+            self.log_msg(f"Loaded {len(repos)} repositories.")
+        except Exception as e:
+            self.log_msg(f"Error loading repos: {e}")
+
+    @work(thread=True)
+    def action_fetch_remotes(self) -> None:
+        self.log_msg("Fetching remotes (git fetch --all)...")
+        try:
+            subprocess.run(["git", "fetch", "--all"], capture_output=True, text=True, check=True)
+            self.log_msg("Successfully fetched remotes.")
+        except subprocess.CalledProcessError as e:
+            self.log_msg(f"Error fetching remotes: {e.stderr}")
+
+    @work(thread=True)
+    def bulk_action_repos(self, action: str, visibility: str = "") -> None:
+        if not self.selected_repos:
+            self.log_msg("Error: No repositories selected.")
+            return
+        
+        repos = list(self.selected_repos)
+        self.log_msg(f"Starting {action} for {len(repos)} repos...")
+        
+        for repo_name in repos:
+            try:
+                if action == "delete":
+                    subprocess.run(["gh", "repo", "delete", repo_name, "--yes"], capture_output=True, text=True, check=True)
+                    self.log_msg(f"Deleted {repo_name}.")
+                elif action == "visibility":
+                    subprocess.run(["gh", "repo", "edit", repo_name, f"--visibility={visibility}"], capture_output=True, text=True, check=True)
+                    self.log_msg(f"Made {repo_name} {visibility}.")
+            except subprocess.CalledProcessError as e:
+                self.log_msg(f"Error processing {repo_name}: {e.stderr}")
+        
+        self.log_msg(f"Completed {action} operation.")
+        self.load_my_repos()
 
     @work(thread=True)
     def load_dashboard(self) -> None:
@@ -289,9 +356,10 @@ class GHTUIApp(App):
     def show_table(self, title: str, headers: list, rows: list) -> None:
         self.query_one("#content-title", Label).update(title)
         self.data_table.clear(columns=True)
-        self.data_table.add_columns(*headers)
+        self.col_keys = self.data_table.add_columns(*headers)
+        self.row_keys = []
         for row in rows:
-            self.data_table.add_row(*row)
+            self.row_keys.append(self.data_table.add_row(*row))
             
         self.markdown_view.display = False
         self.data_table.display = True
@@ -330,15 +398,21 @@ class GHTUIApp(App):
         
         if btn_id and btn_id.startswith("nav-"):
             is_config = (btn_id == "nav-config")
+            is_repos = (btn_id == "nav-my-repos")
             if hasattr(self, 'config_controls'):
                 self.config_controls.display = is_config
-            self.btn_view_details.display = not is_config
-            self.btn_open_browser.display = not is_config
-            self.btn_refresh.display = not is_config
-            self.btn_create_issue.display = not is_config
+            if hasattr(self, 'repo_controls'):
+                self.repo_controls.display = is_repos
+                
+            self.btn_view_details.display = not (is_config or is_repos)
+            self.btn_open_browser.display = not (is_config or is_repos)
+            self.btn_refresh.display = not (is_config or is_repos)
+            self.btn_create_issue.display = not (is_config or is_repos)
         
         if btn_id == "nav-dashboard":
             self.load_dashboard()
+        elif btn_id == "nav-my-repos":
+            self.load_my_repos()
         elif btn_id == "nav-issues":
             self.load_issues()
         elif btn_id == "nav-prs":
@@ -375,6 +449,14 @@ class GHTUIApp(App):
         elif btn_id == "action-set-default":
             repo = self.query_one("#input-remote-url", Input).value.strip()
             self.action_remote_default(repo)
+        elif btn_id == "action-fetch-remotes":
+            self.action_fetch_remotes()
+        elif btn_id == "action-bulk-delete":
+            self.bulk_action_repos("delete")
+        elif btn_id == "action-bulk-private":
+            self.bulk_action_repos("visibility", "private")
+        elif btn_id == "action-bulk-public":
+            self.bulk_action_repos("visibility", "public")
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         row_index = event.cursor_row
@@ -382,6 +464,16 @@ class GHTUIApp(App):
             self.selected_item = self.current_data[row_index]
             self.btn_view_details.disabled = False
             self.btn_open_browser.disabled = False
+            
+            if self.current_view == "my-repos":
+                repo_name = self.selected_item["name"]
+                if repo_name in self.selected_repos:
+                    self.selected_repos.remove(repo_name)
+                    mark = "[ ]"
+                else:
+                    self.selected_repos.add(repo_name)
+                    mark = "[X]"
+                self.data_table.update_cell(self.row_keys[row_index], self.col_keys[0], mark)
             
     def action_back_to_list(self) -> None:
         if self.current_view == "issues":

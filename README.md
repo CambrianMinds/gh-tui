@@ -8,7 +8,8 @@ This tool makes exploring repositories, issues, and pull requests accessible to 
 - **Issues & PRs:** Browse open issues and pull requests in an interactive data table.
 - **Details View:** Read issue/PR descriptions beautifully formatted in Markdown within the terminal.
 - **Interactive Login:** Seamlessly launch the GitHub CLI authentication flow directly from the TUI.
-- **Remotes & Configuration:** Manage git remotes (add/remove) and set the default `gh` repository via a dedicated configuration panel.
+- **My Repositories & Bulk Actions:** List all your GitHub repositories, select multiple rows, and perform bulk deletions or bulk visibility changes (make public/private).
+- **Remotes & Configuration:** Manage git remotes (add/remove), instantly fetch all remotes (`git fetch --all`), and set the default `gh` repository via a dedicated configuration panel.
 - **Browser Integration:** Instantly open the selected issue or PR in your default web browser with one click.
 - **Cross-Repository Support:** Leave the repository input blank to view the current directory's git repo, or type any `owner/repo` (e.g., `cambrianminds/xai-tts`) to explore remotely!
 
