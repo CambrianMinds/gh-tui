@@ -11,6 +11,8 @@ This tool makes exploring repositories, issues, and pull requests accessible to 
 - **My Repositories & Bulk Actions:** List all your GitHub repositories, select multiple rows, and perform bulk deletions or bulk visibility changes (make public/private).
 - **Remotes & Configuration:** Manage git remotes (add/remove), instantly fetch all remotes (`git fetch --all`), and set the default `gh` repository via a dedicated configuration panel.
 - **Browser Integration:** Instantly open the selected issue or PR in your default web browser with one click.
+- **Search Capabilities:** A filter bar makes tracking down issues and PRs much easier.
+- **Clone Actions:** Select a repository in the `My Repositories` view and easily clone it with a single button.
 - **Cross-Repository Support:** Leave the repository input blank to view the current directory's git repo, or type any `owner/repo` (e.g., `cambrianminds/xai-tts`) to explore remotely!
 
 ## Prerequisites
@@ -35,3 +37,6 @@ This tool makes exploring repositories, issues, and pull requests accessible to 
 - `b`: Go back to the list view (if you are reading a specific issue/PR's details)
 - `Tab`: Navigate between buttons and tables
 - `Enter` or `Space`: Trigger the focused button or select a table row
+
+## License
+Distributed under the [MIT License](LICENSE).

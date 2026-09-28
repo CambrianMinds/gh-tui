@@ -16,7 +16,7 @@ class GHTUIApp(App):
     #left-panel {
         width: 20%;
         height: 100%;
-        border-right: solid dodgerblue;
+        border-right: solid $primary;
         padding: 1;
     }
     #center-panel {
@@ -27,7 +27,7 @@ class GHTUIApp(App):
     #right-panel {
         width: 20%;
         height: 100%;
-        border-left: solid dodgerblue;
+        border-left: solid $primary;
         padding: 1;
     }
     .field {
@@ -43,17 +43,17 @@ class GHTUIApp(App):
     }
     DataTable {
         height: 1fr;
-        border: solid gray;
+        border: solid $panel-light;
     }
     Markdown {
         height: 1fr;
-        border: solid gray;
+        border: solid $panel-light;
         overflow-y: scroll;
         display: none;
     }
     Log {
         height: 10;
-        border: solid gray;
+        border: solid $panel-light;
     }
     """
 
@@ -89,6 +89,11 @@ class GHTUIApp(App):
             # Center Panel: Content (Table or Details)
             with Vertical(id="center-panel"):
                 yield Label("Content View", id="content-title", classes="field")
+                
+                self.search_input = Input(id="search-filter", placeholder="Filter items...", classes="field")
+                self.search_input.display = False
+                yield self.search_input
+                
                 self.data_table = DataTable(cursor_type="row")
                 yield self.data_table
                 
@@ -111,6 +116,7 @@ class GHTUIApp(App):
                 yield self.btn_create_issue
                 
                 self.repo_controls = Vertical(
+                    Button("Clone Repository", id="action-clone", classes="action-btn", variant="success"),
                     Button("Bulk Delete", id="action-bulk-delete", classes="action-btn", variant="error"),
                     Button("Make Private", id="action-bulk-private", classes="action-btn", variant="warning"),
                     Button("Make Public", id="action-bulk-public", classes="action-btn", variant="primary"),
@@ -221,6 +227,20 @@ class GHTUIApp(App):
         
         self.log_msg(f"Completed {action} operation.")
         self.load_my_repos()
+
+    @work(thread=True)
+    def action_clone_repo(self) -> None:
+        if not self.selected_repos:
+            self.log_msg("Error: No repositories selected.")
+            return
+        
+        for repo_name in self.selected_repos:
+            self.log_msg(f"Cloning {repo_name}...")
+            try:
+                subprocess.run(["gh", "repo", "clone", repo_name], capture_output=True, text=True, check=True)
+                self.log_msg(f"Cloned {repo_name}.")
+            except subprocess.CalledProcessError as e:
+                self.log_msg(f"Error cloning {repo_name}: {e.stderr}")
 
     @work(thread=True)
     def load_dashboard(self) -> None:
@@ -355,12 +375,14 @@ class GHTUIApp(App):
 
     def show_table(self, title: str, headers: list, rows: list) -> None:
         self.query_one("#content-title", Label).update(title)
+        self.current_rows = rows
         self.data_table.clear(columns=True)
         self.col_keys = self.data_table.add_columns(*headers)
         self.row_keys = []
         for row in rows:
             self.row_keys.append(self.data_table.add_row(*row))
             
+        self.search_input.display = True
         self.markdown_view.display = False
         self.data_table.display = True
         
@@ -372,6 +394,7 @@ class GHTUIApp(App):
         self.query_one("#content-title", Label).update(title)
         self.markdown_view.update(content)
         
+        self.search_input.display = False
         self.data_table.display = False
         self.markdown_view.display = True
         
@@ -451,12 +474,26 @@ class GHTUIApp(App):
             self.action_remote_default(repo)
         elif btn_id == "action-fetch-remotes":
             self.action_fetch_remotes()
+        elif btn_id == "action-clone":
+            self.action_clone_repo()
         elif btn_id == "action-bulk-delete":
             self.bulk_action_repos("delete")
         elif btn_id == "action-bulk-private":
             self.bulk_action_repos("visibility", "private")
         elif btn_id == "action-bulk-public":
             self.bulk_action_repos("visibility", "public")
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "search-filter":
+            query = event.value.lower()
+            self.data_table.clear()
+            self.row_keys = []
+            
+            for item, row in zip(self.current_data, getattr(self, "current_rows", [])):
+                # Join the row strings to check if any field matches the query
+                row_str = " ".join(str(cell).lower() for cell in row)
+                if query in row_str:
+                    self.row_keys.append(self.data_table.add_row(*row))
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         row_index = event.cursor_row
@@ -477,10 +514,12 @@ class GHTUIApp(App):
             
     def action_back_to_list(self) -> None:
         if self.current_view == "issues":
+            self.search_input.display = True
             self.data_table.display = True
             self.markdown_view.display = False
             self.query_one("#content-title", Label).update("Open Issues")
         elif self.current_view == "prs":
+            self.search_input.display = True
             self.data_table.display = True
             self.markdown_view.display = False
             self.query_one("#content-title", Label).update("Open Pull Requests")
